@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placement Flow — Housing Service Coordinator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#ffffff;--bg2:#f7f6f2;--bg3:#f0efe9;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#9c9a92;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --blue-bg:#e6f1fb;--blue-text:#0c447c;--blue-border:#85b7eb;
+  --green-bg:#e1f5ee;--green-text:#085041;--green-border:#5dcaa5;
+  --amber-bg:#faeeda;--amber-text:#633806;--amber-border:#fac775;
+  --red-bg:#fcebeb;--red-text:#791f1f;--red-border:#f09595;
+  --purple-bg:#eeedfe;--purple-text:#3c3489;--purple-border:#afa9ec;
+  --gray-bg:#f1efe8;--gray-text:#444441;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* GATE */
+#pf-gate{position:fixed;inset:0;z-index:9999;background:#f7f6f2;display:flex;align-items:center;justify-content:center;}
+.gate-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:16px;padding:36px 32px;width:92%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,0.08);display:flex;flex-direction:column;align-items:center;}
+.gate-logo{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+.gate-logo span{color:#185fa5;}
+.gate-sub{font-size:13px;color:#5f5e5a;margin-bottom:28px;text-align:center;line-height:1.5;}
+.gate-label{font-size:11px;font-weight:600;color:#5f5e5a;align-self:flex-start;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;}
+.gate-input{width:100%;padding:10px 14px;border:0.5px solid rgba(0,0,0,0.22);border-radius:8px;font-size:14px;outline:none;margin-bottom:12px;transition:border .15s;letter-spacing:.1em;font-family:inherit;}
+.gate-input:focus{border-color:#185fa5;}
+.gate-input.error{border-color:#e24b4a;background:#fcebeb;}
+.gate-btn{width:100%;padding:11px;background:#185fa5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-bottom:10px;font-family:inherit;}
+.gate-btn:hover{background:#0c447c;}
+.gate-err{font-size:12px;color:#791f1f;text-align:center;min-height:18px;}
+.gate-footer{font-size:11px;color:#9c9a92;margin-top:20px;text-align:center;line-height:1.6;}
+
+/* NAV */
+.topnav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:50;height:52px;flex-wrap:wrap;}
+.logo{font-size:17px;font-weight:600;letter-spacing:-.4px;margin-right:20px;}
+.logo span{color:#185fa5;}
+.top-tabs{display:flex;gap:2px;height:52px;}
+.top-tab{font-size:13px;font-weight:500;padding:0 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;height:100%;border-bottom:2px solid transparent;transition:all .15s;}
+.top-tab.active{color:#185fa5;border-bottom-color:#185fa5;}
+.top-tab:hover:not(.active){color:var(--text);background:var(--bg2);}
+.nav-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
+
+/* SCREENS */
+.screen{display:none;padding:20px;max-width:860px;margin:0 auto;}
+.screen.active{display:block;}
+
+/* CARDS */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
+.card-pad{padding:14px 16px;}
+.section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.page-header{margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.page-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--text2);}
+
+/* CASE */
+.case-header{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;gap:12px;background:var(--bg2);}
+.avatar{width:38px;height:38px;min-width:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+.case-id{font-size:15px;font-weight:600;}
+.case-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;}
+.info-cell{padding:10px 16px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);}
+.info-cell:nth-child(even){border-right:none;}
+.info-cell:nth-last-child(-n+2){border-bottom:none;}
+.info-label{font-size:11px;font-weight:500;color:var(--text3);margin-bottom:3px;}
+.info-val{font-size:13px;font-weight:500;}
+.info-val.blue{color:var(--blue-text);}
+.row-strip{display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;}
+.row-label{font-size:11px;font-weight:500;color:var(--text3);min-width:120px;}
+.fpill{font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.add-btn{font-size:11px;color:var(--blue-text);background:none;border:0.5px dashed var(--blue-border);border-radius:20px;padding:3px 10px;cursor:pointer;transition:all .15s;}
+.add-btn:hover{background:var(--blue-bg);}
+.protocol-pill{font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;cursor:pointer;border:0.5px solid transparent;transition:all .15s;background:var(--bg3);color:var(--text2);}
+.protocol-pill.sel-wait{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border);}
+.protocol-pill.sel-call{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+
+/* VENDOR TABLE */
+.vhead{display:grid;grid-template-columns:22px minmax(0,1.6fr) minmax(0,1.2fr) 100px 110px 28px;gap:8px;padding:7px 16px;font-size:11px;font-weight:600;color:var(--text3);border-bottom:0.5px solid var(--border);}
+.vrow{display:flex;flex-direction:column;border-bottom:0.5px solid var(--border);transition:background .1s;}
+.vrow:hover{background:var(--bg2);}
+.vrow-main{display:grid;grid-template-columns:22px minmax(0,1.6fr) minmax(0,1.2fr) 100px 110px 28px;gap:8px;padding:9px 16px;align-items:center;cursor:pointer;width:100%;}
+.vnum{font-size:11px;color:var(--text3);font-weight:600;}
+.vcell{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vcell.muted{font-size:12px;color:var(--text2);}
+.substeps{display:none;background:var(--bg2);border-top:0.5px solid var(--border);}
+.substeps.open{display:block;}
+.substep-row{display:grid;grid-template-columns:14px minmax(0,1fr) minmax(0,120px);gap:8px;align-items:center;padding:6px 16px 6px 56px;border-bottom:0.5px solid var(--border);font-size:12px;}
+.substep-row:last-child{border-bottom:none;}
+.substep-check{width:14px;height:14px;min-width:14px;border-radius:3px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.substep-check.done{background:var(--green-bg);border-color:var(--green-border);}
+.substep-label{color:var(--text2);line-height:1.4;}
+.substep-label.done{text-decoration:line-through;color:var(--text3);}
+.substep-owner{font-size:11px;color:var(--text3);white-space:nowrap;text-align:right;}
+.blocked-reason{font-size:11px;color:var(--red-text);background:var(--red-bg);padding:2px 8px;border-radius:10px;white-space:nowrap;text-align:right;}
+.expand-arrow{font-size:9px;color:var(--text3);transition:transform .2s;margin-left:4px;display:inline-block;vertical-align:middle;}
+.expand-arrow.open{transform:rotate(90deg);}
+.spill{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;}
+.s-pending{background:var(--gray-bg);color:var(--gray-text);}
+.s-scheduled{background:var(--blue-bg);color:var(--blue-text);}
+.s-inprog{background:var(--amber-bg);color:var(--amber-text);}
+.s-complete{background:var(--green-bg);color:var(--green-text);}
+.s-blocked{background:var(--red-bg);color:var(--red-text);}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 4px;border-radius:4px;transition:all .15s;}
+.del-btn:hover{color:var(--red-text);background:var(--red-bg);}
+.add-vendor-row{padding:8px 16px;display:flex;gap:8px;}
+.rlog-wrap{padding:10px 16px;background:var(--bg2);border-top:0.5px solid var(--border);}
+.rlog-entry{font-size:12px;color:var(--text2);padding:4px 0;border-bottom:0.5px solid var(--border);display:flex;gap:10px;}
+.rlog-entry:last-child{border-bottom:none;}
+.rlog-date{color:var(--text3);min-width:48px;font-size:11px;}
+.rlog-reason{color:var(--red-text);}
+.alert-banner{display:flex;align-items:center;gap:8px;padding:7px 16px;font-size:12px;}
+.alert-danger{background:var(--red-bg);color:var(--red-text);border-bottom:0.5px solid var(--red-border);}
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:0.5px solid var(--border);background:var(--bg2);}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+
+/* APPROVAL */
+.pov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px;}
+.pov-card{border-radius:var(--radius-lg);border:0.5px solid transparent;overflow:hidden;}
+.pov-head{padding:10px 14px;font-size:13px;font-weight:600;}
+.pov-body{padding:12px 14px;}
+.msg-bubble{border-radius:var(--radius);padding:10px 12px;font-size:12px;line-height:1.7;margin-bottom:8px;}
+.action-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:12px;color:var(--text2);border-bottom:0.5px solid var(--border);}
+.action-item:last-child{border-bottom:none;}
+.adot{width:7px;height:7px;min-width:7px;border-radius:50%;margin-top:4px;}
+.flow-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;}
+.flow-num{width:28px;height:28px;min-width:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:var(--blue-bg);color:var(--blue-text);}
+.flow-body{flex:1;}
+.flow-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+.flow-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+.auto-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--green-bg);color:var(--green-text);display:inline-block;margin-top:5px;}
+
+/* SMS */
+.trigger-row{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:0.5px solid var(--border);}
+.trigger-row:last-child{border-bottom:none;}
+.t-icon{width:36px;height:36px;min-width:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;}
+.t-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.t-when{font-size:11px;color:var(--text3);margin-bottom:6px;}
+.sms-box{background:var(--bg2);border-radius:var(--radius);padding:9px 12px;font-size:12px;line-height:1.7;border-left:3px solid transparent;}
+.pill-auto{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--green-bg);color:var(--green-text);display:inline-block;margin-top:5px;}
+.pill-manual{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--amber-bg);color:var(--amber-text);display:inline-block;margin-top:5px;}
+
+/* PHONE */
+.phone-wrap{display:flex;justify-content:center;padding:10px 0 20px;}
+.phone-frame{background:#111;border-radius:36px;padding:14px 10px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.25);}
+.phone-notch{width:80px;height:6px;background:#333;border-radius:3px;margin:0 auto 10px;}
+.phone-screen{background:#f5f5f7;border-radius:24px;overflow:hidden;}
+.phone-header{background:#fff;padding:10px 14px;border-bottom:0.5px solid #e5e5ea;display:flex;align-items:center;gap:10px;}
+.phone-av{width:30px;height:30px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0c447c;}
+.phone-name{font-size:13px;font-weight:600;color:#1a1a1a;}
+.phone-sub{font-size:10px;color:#888;}
+.messages{padding:10px;display:flex;flex-direction:column;gap:2px;max-height:500px;overflow-y:auto;}
+.msg-in{background:#e9e9eb;border-radius:14px 14px 14px 3px;padding:8px 10px;font-size:11px;line-height:1.6;color:#1a1a1a;max-width:90%;align-self:flex-start;margin-top:4px;}
+.msg-out{background:#007aff;border-radius:14px 14px 3px 14px;padding:8px 10px;font-size:11px;line-height:1.6;color:#fff;max-width:75%;align-self:flex-end;margin-top:4px;}
+.msg-time{font-size:9px;color:#aaa;margin-top:2px;padding:0 4px;}
+.msg-time.right{text-align:right;}
+.msg-sep{text-align:center;font-size:10px;color:#aaa;margin:8px 0 4px;font-weight:500;}
+
+/* TIMELINE */
+.tl-wrap{padding:4px 0;}
+.tl-item{display:flex;gap:14px;padding-bottom:18px;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:14px;min-width:14px;}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.tl-line{flex:1;width:1.5px;background:var(--border2);margin-top:4px;}
+.tl-item:last-child .tl-line{display:none;}
+.tl-body{flex:1;padding-bottom:2px;}
+.tl-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+.tl-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:5px;}
+.tl-sms{background:var(--bg2);border-radius:var(--radius);padding:7px 10px;font-size:11px;line-height:1.6;color:var(--text);margin-bottom:5px;border-left:2.5px solid #1d9e75;}
+.tl-nosms{font-size:11px;color:var(--text3);font-style:italic;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:var(--radius-xl);border:0.5px solid var(--border);padding:22px;width:94%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.18);}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;}
+.form-group{margin-bottom:13px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);font-size:13px;background:var(--bg);color:var(--text);outline:none;transition:border .15s;font-family:inherit;}
+.form-group input:focus,.form-group select:focus{border-color:#378add;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
+.btn-primary{font-size:13px;font-weight:600;padding:8px 18px;border-radius:var(--radius);background:#185fa5;color:#fff;border:none;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:#0c447c;}
+.btn-cancel{font-size:13px;padding:8px 18px;border-radius:var(--radius);background:transparent;color:var(--text2);border:0.5px solid var(--border2);cursor:pointer;}
+.info-box{border-radius:var(--radius);padding:10px 14px;font-size:12px;line-height:1.6;margin-bottom:12px;}
+.staff-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+.staff-row:last-child{border-bottom:none;}
+.staff-av{width:34px;height:34px;min-width:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+.staff-body{flex:1;}
+.staff-name{font-size:13px;font-weight:500;color:var(--text);}
+.staff-agency{font-size:11px;color:var(--text3);font-weight:400;margin-left:6px;}
+.staff-cases{font-size:12px;color:var(--text2);margin-top:1px;}
+.staff-pill{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.active-pill{background:#e1f5ee;color:#085041;}
+.out-pill{background:#fcebeb;color:#791f1f;}
+.warn-pill{background:#faeeda;color:#633806;}
+.danger-pill{background:#fcebeb;color:#791f1f;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+.alert-item:last-child{border-bottom:none;}
+.alert-icon{width:28px;height:28px;min-width:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.danger-item .alert-icon{background:#fcebeb;}
+.warn-item .alert-icon{background:#faeeda;}
+.alert-body{flex:1;}
+.alert-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.alert-sub{font-size:12px;color:var(--text2);}
+.chat-msg{background:var(--bg2);border-radius:var(--radius);padding:9px 12px;}
+.chat-who{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px;}
+.chat-time{font-size:10px;color:var(--text3);font-weight:400;margin-left:6px;}
+.chat-text{font-size:12px;color:var(--text);line-height:1.6;}
+.ai-note{background:#e6f1fb;border-left:3px solid #378add;}
+.ai-note .chat-who{color:#0c447c;}
+.data-section{border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary);margin-bottom:12px;}
+.data-section-head{padding:11px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.data-section-body{padding:12px 16px;}
+.worker-mgmt-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--color-border-tertiary);}
+.worker-mgmt-row:last-child{border-bottom:none;}
+.worker-av-sm{width:30px;height:30px;min-width:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.worker-info{flex:1;}
+.worker-name-sm{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.worker-meta{font-size:11px;color:var(--color-text-secondary);}
+.danger-btn{font-size:12px;font-weight:500;padding:5px 12px;border-radius:var(--border-radius-md);background:var(--color-background-danger);color:var(--color-text-danger);border:0.5px solid var(--color-border-danger);cursor:pointer;transition:all .15s;}
+.danger-btn:hover{background:#f09595;}
+.warn-btn{font-size:12px;font-weight:500;padding:5px 12px;border-radius:var(--border-radius-md);background:var(--color-background-warning);color:var(--color-text-warning);border:0.5px solid var(--color-border-warning);cursor:pointer;transition:all .15s;}
+.import-zone{border:1.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);padding:20px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:10px;}
+.import-zone:hover{background:var(--color-background-secondary);border-color:var(--color-border-info);}
+.import-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;}
+.import-sub{font-size:12px;color:var(--color-text-secondary);}
+.delete-zone{background:#fff5f5;border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:12px;}
+.delete-warning{font-size:12px;color:var(--color-text-danger);line-height:1.6;margin-bottom:12px;}
+.delete-confirm-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.delete-confirm-input{flex:1;min-width:160px;font-size:13px;padding:7px 10px;border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;font-family:inherit;}
+.delete-forever-btn{font-size:13px;font-weight:600;padding:8px 16px;border-radius:var(--border-radius-md);background:#e24b4a;color:#fff;border:none;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.delete-forever-btn:hover{background:#a32d2d;}
+.deleted-confirm{display:none;background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:10px 14px;font-size:13px;color:var(--color-text-success);margin-top:10px;}
+
+@media(max-width:600px){
+  .screen{padding:12px;}
+  .vhead,.vrow{grid-template-columns:20px minmax(0,1fr) 80px 80px 28px;}
+  .vhead span:nth-child(3),.vrow .vcell.stype,.vhead span:nth-child(5),.vrow .vcell.comp{display:none;}
+  .info-grid{grid-template-columns:1fr;}
+  .pov-grid{grid-template-columns:1fr;}
+  .top-tab{padding:0 8px;font-size:11px;}
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="pf-gate">
+  <div class="gate-card">
+    <div class="gate-logo"><span>Placement</span> Flow</div>
+    <div class="gate-sub">Housing service coordination platform<br>Early access prototype &mdash; by invitation only</div>
+    <div class="gate-label">Access code</div>
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter access code"/>
+    <button class="gate-btn" id="gate-btn">Enter</button>
+    <div class="gate-err" id="gate-err"></div>
+    <div class="gate-footer">To request access contact<br><strong>Placement Flow</strong></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="logo"><span>Placement</span> Flow</div>
+  <div class="top-tabs">
+    <button class="top-tab active" id="tab-cases">Cases</button>
+    <button class="top-tab" id="tab-approval">Approval flow</button>
+    <button class="top-tab" id="tab-sms">SMS system</button>
+    <button class="top-tab" id="tab-phone">Client view</button>
+    <button class="top-tab" id="tab-journey">Full journey</button>
+    <button class="top-tab" id="tab-manager">Manager</button>
+  </div>
+  <div class="nav-right">
+    <span class="badge" style="background:#e1f5ee;color:#085041;">2 active</span>
+    <span class="badge" style="background:#fcebeb;color:#791f1f;" id="blocked-badge">1 blocked</span>
+  </div>
+</nav>
+
+<!-- CASES -->
+<div id="screen-cases" class="screen active">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Active cases</div>
+      <div class="page-sub">Use &ldquo;New case&rdquo; to add a client during your demo.</div>
+    </div>
+    <button class="btn-primary" id="new-case-btn" style="white-space:nowrap;">+ New case</button>
+  </div>
+
+  <!-- CASE 1 -->
+  <div class="card" id="case-WF-10293">
+    <div class="alert-banner alert-danger">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#791f1f" stroke-width="1.3"/><path d="M7 4v3.5M7 10v.5" stroke="#791f1f" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Utilities not confirmed &mdash; move at risk. Caseworker notified automatically.
+    </div>
+    <div class="case-header">
+      <div class="avatar" style="background:#fcebeb;color:#791f1f;">MR</div>
+      <div style="flex:1;">
+        <div class="case-id">WF-10293</div>
+        <div class="case-sub">Maria R. &nbsp;&middot;&nbsp; Way Finders &nbsp;&middot;&nbsp; Target move: Apr 4</div>
+      </div>
+      <span class="spill s-blocked">Blocked</span>
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><div class="info-label">Primary contact</div><div class="info-val blue">J. Santos &mdash; Way Finders</div></div>
+      <div class="info-cell"><div class="info-label">Also assigned</div><div class="info-val" style="color:var(--text2);">T. Brown, R. Diaz</div></div>
+      <div class="info-cell"><div class="info-label">Packet status</div><div class="info-val"><span class="spill s-complete">Approved</span></div></div>
+      <div class="info-cell"><div class="info-label">Approval date</div><div class="info-val" style="color:var(--text2);">Mar 28</div></div>
+    </div>
+    <div class="row-strip">
+      <span class="row-label">Funding source</span>
+      <span class="fpill" style="background:#e6f1fb;color:#0c447c;">HomeBase</span>
+      <button class="add-btn">+ add source</button>
+    </div>
+    <div class="row-strip">
+      <span class="row-label">Vendor protocol</span>
+      <button class="protocol-pill sel-wait" data-type="wait">Wait for caseworker call</button>
+      <button class="protocol-pill" data-type="call">Vendor calls client directly</button>
+    </div>
+    <div class="vhead"><span></span><span>Step</span><span>Vendor</span><span>Sched. date</span><span>Status</span><span></span></div>
+
+    <div class="vrow" id="step-wf1-1">
+      <div class="vrow-main" onclick="toggleSubsteps('wf1-1')">
+        <span class="vnum">1</span>
+        <span class="vcell">Unit cleaning <span class="expand-arrow open" id="arr-wf1-1">►</span></span>
+        <span class="vcell muted">Fresh Start Cleaning</span>
+        <span class="vcell muted">Apr 1</span>
+        <span class="spill s-complete">Complete</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps open" id="sub-wf1-1">
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Deep clean all rooms</span><span class="substep-owner">Fresh Start Cleaning</span></div>
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Vendor confirms completion</span><span class="substep-owner">Fresh Start Cleaning</span></div>
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Caseworker signs off</span><span class="substep-owner">J. Santos</span></div>
+      </div>
+    </div>
+
+    <div class="vrow" id="step-wf1-2">
+      <div class="vrow-main" onclick="toggleSubsteps('wf1-2')">
+        <span class="vnum">2</span>
+        <span class="vcell">Utilities setup <span class="expand-arrow open" id="arr-wf1-2">►</span></span>
+        <span class="vcell muted">Eversource</span>
+        <span class="vcell muted">Apr 2</span>
+        <span class="spill s-blocked">Blocked</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps open" id="sub-wf1-2">
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Account created with Eversource</span><span class="substep-owner">J. Santos</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Security deposit paid</span><span class="blocked-reason">Blocking: deposit pending</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Activation date confirmed</span><span class="substep-owner">Eversource</span></div>
+      </div>
+    </div>
+
+    <div class="vrow" id="step-wf1-3">
+      <div class="vrow-main" onclick="toggleSubsteps('wf1-3')">
+        <span class="vnum">3</span>
+        <span class="vcell">Furniture delivery <span class="expand-arrow" id="arr-wf1-3">►</span></span>
+        <span class="vcell muted">Local Furniture Bank</span>
+        <span class="vcell muted">Apr 3</span>
+        <span class="spill s-scheduled">Scheduled</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps" id="sub-wf1-3">
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Items selected and reserved</span><span class="substep-owner">J. Santos</span></div>
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Delivery date confirmed</span><span class="substep-owner">Local Furniture Bank</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Delivery completed and signed off</span><span class="substep-owner">Local Furniture Bank</span></div>
+      </div>
+    </div>
+
+    <div class="vrow" id="step-wf1-4">
+      <div class="vrow-main" onclick="toggleSubsteps('wf1-4')">
+        <span class="vnum">4</span>
+        <span class="vcell">Move day <span class="expand-arrow" id="arr-wf1-4">►</span></span>
+        <span class="vcell muted">Haul of Fame Movers</span>
+        <span class="vcell muted">Apr 4</span>
+        <span class="spill s-scheduled">Scheduled</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps" id="sub-wf1-4">
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Move date confirmed with vendor</span><span class="substep-owner">J. Santos</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Client confirmed via SMS</span><span class="substep-owner">Placement Flow</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Keys ready and collected</span><span class="substep-owner">J. Santos</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Move completed</span><span class="substep-owner">Haul of Fame Movers</span></div>
+      </div>
+    </div>
+
+    <div class="add-vendor-row"><button class="add-btn open-vendor-modal">+ add step</button></div>
+    <div class="rlog-wrap">
+      <div class="section-label">Reschedule log</div>
+      <div class="rlog-entry"><span class="rlog-date">Mar 20</span><span>Date Mar 25 to Apr 4 &nbsp;&middot;&nbsp; <span class="rlog-reason">Landlord renovation not complete</span></span></div>
+      <div class="rlog-entry"><span class="rlog-date">Mar 27</span><span>Date Apr 1 to Apr 4 &nbsp;&middot;&nbsp; <span class="rlog-reason">Appliances not delivered</span></span></div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="spill s-pending" style="padding:2px 6px;">Pending</span> not booked</span>
+      <span class="legend-item"><span class="spill s-scheduled" style="padding:2px 6px;">Scheduled</span> booked</span>
+      <span class="legend-item"><span class="spill s-inprog" style="padding:2px 6px;">In progress</span> today</span>
+      <span class="legend-item"><span class="spill s-complete" style="padding:2px 6px;">Complete</span> done</span>
+      <span class="legend-item"><span class="spill s-blocked" style="padding:2px 6px;">Blocked</span> needs action</span>
+    </div>
+  </div>
+
+  <!-- CASE 2 -->
+  <div class="card" id="case-CHD-00441">
+    <div class="case-header">
+      <div class="avatar" style="background:#e1f5ee;color:#085041;">JL</div>
+      <div style="flex:1;">
+        <div class="case-id">CHD-00441</div>
+        <div class="case-sub">James L. &nbsp;&middot;&nbsp; CHD &nbsp;&middot;&nbsp; Target move: Apr 10</div>
+      </div>
+      <span class="spill s-scheduled">Scheduled</span>
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><div class="info-label">Primary contact</div><div class="info-val blue">T. Brown &mdash; CHD</div></div>
+      <div class="info-cell"><div class="info-label">Also assigned</div><div class="info-val" style="color:var(--text2);">--</div></div>
+      <div class="info-cell"><div class="info-label">Packet status</div><div class="info-val"><span class="spill s-complete">Approved</span></div></div>
+      <div class="info-cell"><div class="info-label">Approval date</div><div class="info-val" style="color:var(--text2);">Apr 1</div></div>
+    </div>
+    <div class="row-strip">
+      <span class="row-label">Funding source</span>
+      <span class="fpill" style="background:#e6f1fb;color:#0c447c;">RAFT</span>
+      <span class="fpill" style="background:#eeedfe;color:#3c3489;margin-left:2px;">CHD</span>
+      <button class="add-btn">+ add source</button>
+    </div>
+    <div class="row-strip">
+      <span class="row-label">Vendor protocol</span>
+      <button class="protocol-pill" data-type="wait">Wait for caseworker call</button>
+      <button class="protocol-pill sel-call" data-type="call">Vendor calls client directly</button>
+    </div>
+    <div class="vhead"><span></span><span>Step</span><span>Vendor</span><span>Sched. date</span><span>Status</span><span></span></div>
+
+    <div class="vrow" id="step-chd-1">
+      <div class="vrow-main" onclick="toggleSubsteps('chd-1')">
+        <span class="vnum">1</span>
+        <span class="vcell">Unit cleaning <span class="expand-arrow" id="arr-chd-1">►</span></span>
+        <span class="vcell muted">City Cleaners</span>
+        <span class="vcell muted">Apr 7</span>
+        <span class="spill s-scheduled">Scheduled</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps" id="sub-chd-1">
+        <div class="substep-row"><div class="substep-check done" onclick="toggleSubCheck(this)"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="substep-label done">Cleaning date confirmed</span><span class="substep-owner">T. Brown</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Deep clean completed</span><span class="substep-owner">City Cleaners</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Caseworker signs off</span><span class="substep-owner">T. Brown</span></div>
+      </div>
+    </div>
+
+    <div class="vrow" id="step-chd-2">
+      <div class="vrow-main" onclick="toggleSubsteps('chd-2')">
+        <span class="vnum">2</span>
+        <span class="vcell">Move day <span class="expand-arrow" id="arr-chd-2">►</span></span>
+        <span class="vcell muted">Haul of Fame Movers</span>
+        <span class="vcell muted">Apr 10</span>
+        <span class="spill s-pending">Pending</span>
+        <button class="del-btn" onclick="event.stopPropagation();this.closest('.vrow').remove()">x</button>
+      </div>
+      <div class="substeps" id="sub-chd-2">
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Move date confirmed with vendor</span><span class="substep-owner">T. Brown</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Client confirmed via SMS</span><span class="substep-owner">Placement Flow</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Keys ready and collected</span><span class="substep-owner">T. Brown</span></div>
+        <div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Move completed</span><span class="substep-owner">Haul of Fame Movers</span></div>
+      </div>
+    </div>
+
+    <div class="add-vendor-row"><button class="add-btn open-vendor-modal">+ add step</button></div>
+    <div class="rlog-wrap">
+      <div class="section-label">Reschedule log</div>
+      <div style="font-size:12px;color:var(--text3);font-style:italic;">No reschedules logged.</div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="spill s-pending" style="padding:2px 6px;">Pending</span> not booked</span>
+      <span class="legend-item"><span class="spill s-scheduled" style="padding:2px 6px;">Scheduled</span> booked</span>
+      <span class="legend-item"><span class="spill s-inprog" style="padding:2px 6px;">In progress</span> today</span>
+      <span class="legend-item"><span class="spill s-complete" style="padding:2px 6px;">Complete</span> done</span>
+      <span class="legend-item"><span class="spill s-blocked" style="padding:2px 6px;">Blocked</span> needs action</span>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVAL FLOW -->
+<div id="screen-approval" class="screen">
+  <div class="page-header"><div><div class="page-title">Approval flow</div><div class="page-sub">What happens the moment a packet is marked Approved &mdash; all three perspectives simultaneously.</div></div></div>
+  <div class="card card-pad" style="margin-bottom:14px;">
+    <div class="section-label">Trigger event</div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><div class="flow-title">Caseworker marks packet &rarr; Approved</div><div class="flow-desc">They select the funder, set the approval date, and choose the vendor protocol. Everything below fires automatically from this one action.</div><span class="auto-tag">triggers 3 simultaneous actions</span></div></div>
+  </div>
+  <div class="pov-grid">
+    <div class="pov-card" style="background:#eeedfe;border-color:#afa9ec;">
+      <div class="pov-head" style="background:#cecbf6;color:#26215c;">Caseworker view</div>
+      <div class="pov-body">
+        <div style="font-size:11px;font-weight:600;color:#534ab7;margin-bottom:6px;">What they see in the platform</div>
+        <div class="msg-bubble" style="background:#fff;border:0.5px solid #afa9ec;"><div style="font-size:12px;font-weight:600;color:#3c3489;margin-bottom:5px;">WF-10293 &mdash; Packet approved</div><div style="font-size:12px;color:var(--text2);line-height:1.7;">Funder: HomeBase<br>Approved: Mar 28<br>Protocol: <strong>Wait for your call</strong><br>Client SMS: <span style="color:#085041;font-weight:600;">Sent automatically</span></div></div>
+        <div style="font-size:11px;font-weight:600;color:#534ab7;margin-bottom:6px;margin-top:8px;">Action items</div>
+        <div class="action-item"><div class="adot" style="background:#7f77dd;"></div><div>Reminder to call vendor within 48 hrs to schedule</div></div>
+        <div class="action-item"><div class="adot" style="background:#7f77dd;"></div><div>Primary contact pinned &mdash; no confusion about who owns this case</div></div>
+        <div class="action-item"><div class="adot" style="background:#7f77dd;"></div><div>If 48 hrs passes with no schedule, automatic follow-up alert fires</div></div>
+      </div>
+    </div>
+    <div class="pov-card" style="background:#e1f5ee;border-color:#5dcaa5;">
+      <div class="pov-head" style="background:#9fe1cb;color:#04342c;">Vendor notification</div>
+      <div class="pov-body">
+        <div style="font-size:11px;font-weight:600;color:#0f6e56;margin-bottom:6px;">What Haul of Fame receives</div>
+        <div class="msg-bubble" style="background:#fff;border:0.5px solid #5dcaa5;font-size:12px;line-height:1.7;"><div style="font-weight:600;color:#085041;margin-bottom:4px;">Job approved &mdash; WF-10293</div>Funder: HomeBase<br>Client: Maria R.<br>Address: 78 Maple St, Springfield<br><br><strong>Next step: Wait for caseworker J. Santos to call you. Do not contact the client directly.</strong></div>
+        <div style="font-size:11px;font-weight:600;color:#0f6e56;margin-bottom:6px;margin-top:8px;">What changes</div>
+        <div class="action-item"><div class="adot" style="background:#1d9e75;"></div><div>Protocol is written clearly &mdash; no guessing</div></div>
+        <div class="action-item"><div class="adot" style="background:#1d9e75;"></div><div>Primary contact listed &mdash; no hunting through the approval letter</div></div>
+        <div class="action-item"><div class="adot" style="background:#1d9e75;"></div><div>If caseworker has not called in 48 hrs, vendor gets a follow-up nudge</div></div>
+      </div>
+    </div>
+    <div class="pov-card" style="background:#faeeda;border-color:#ef9f27;">
+      <div class="pov-head" style="background:#fac775;color:#412402;">Client SMS &mdash; sent automatically</div>
+      <div class="pov-body">
+        <div style="background:#f5f5f7;border-radius:14px;padding:12px;margin-bottom:10px;"><div style="background:#fff;border-radius:12px 12px 12px 2px;padding:9px 11px;font-size:12px;line-height:1.7;max-width:95%;border:0.5px solid #e5e5ea;">Hi Maria &mdash; great news. Your housing move has been approved.<br><br>Your caseworker will contact you within 2 business days with next steps.<br><br><strong>You do not need to call anyone right now.</strong></div><div style="font-size:10px;color:#aaa;margin-top:5px;padding-left:4px;">Delivered &middot; Mar 28, 9:04 AM &middot; Automatic</div></div>
+        <div style="font-size:11px;font-weight:600;color:#854f0b;margin-bottom:6px;">Why this matters</div>
+        <div class="action-item"><div class="adot" style="background:#ef9f27;"></div><div>Client stops calling the agency in a panic</div></div>
+        <div class="action-item"><div class="adot" style="background:#ef9f27;"></div><div>They feel informed and respected, not forgotten</div></div>
+        <div class="action-item"><div class="adot" style="background:#ef9f27;"></div><div>No sensitive case info &mdash; just reassurance and a timeframe</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-pad">
+    <div class="section-label">If nothing is scheduled after approval</div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><div class="flow-title">48 hours &mdash; caseworker reminder</div><div class="flow-desc">"WF-10293 was approved 48 hours ago and no move date has been set. Vendor is waiting."</div><span class="auto-tag">automatic</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><div class="flow-title">72 hours &mdash; supervisor notified</div><div class="flow-desc">Platform flags the case to the supervisor. Accountability without an awkward phone call.</div><span class="auto-tag">automatic escalation</span></div></div>
+    <div class="flow-step" style="margin-bottom:0;"><div class="flow-num">4</div><div class="flow-body"><div class="flow-title">Once scheduled &mdash; all three notified simultaneously</div><div class="flow-desc">One action fires three notifications: caseworker confirmation, vendor job details, client SMS with date and moving company name.</div><span class="auto-tag">one action, three notifications</span></div></div>
+  </div>
+</div>
+
+<!-- SMS SYSTEM -->
+<div id="screen-sms" class="screen">
+  <div class="page-header"><div><div class="page-title">Real-time SMS system</div><div class="page-sub">Every status change fires a text automatically. No caseworker action required after case setup.</div></div></div>
+  <div class="card">
+    <div class="trigger-row"><div class="t-icon" style="background:#e1f5ee;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v4l3 3" stroke="#085041" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="#085041" stroke-width="1.3"/></svg></div><div style="flex:1;"><div class="t-title">Case created</div><div class="t-when">Trigger: New case added</div><div class="sms-box" style="border-left-color:#1d9e75;">"Hi [Name] &mdash; your housing case has been opened. We will send updates as things progress."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#e6f1fb;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5z" stroke="#0c447c" stroke-width="1.2" stroke-linejoin="round"/></svg></div><div style="flex:1;"><div class="t-title">Funding packet approved</div><div class="t-when">Trigger: Packet status &rarr; Approved</div><div class="sms-box" style="border-left-color:#378add;">"Great news &mdash; your housing move has been approved through [Funder]. Your caseworker will be in touch within 2 business days. You do not need to call anyone."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#e1f5ee;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="6" stroke="#085041" stroke-width="1.2"/></svg></div><div style="flex:1;"><div class="t-title">Unit / landlord approved</div><div class="t-when">Trigger: Case status &rarr; Unit Approved</div><div class="sms-box" style="border-left-color:#1d9e75;">"Update: your new home at [Street] has been approved by the landlord. Services are being scheduled now."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#e1f5ee;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="#085041" stroke-width="1.2"/><path d="M5 2v2M11 2v2M2 7h12" stroke="#085041" stroke-width="1.2" stroke-linecap="round"/></svg></div><div style="flex:1;"><div class="t-title">Move date scheduled</div><div class="t-when">Trigger: Moving vendor &rarr; Scheduled with date</div><div class="sms-box" style="border-left-color:#1d9e75;">"Your move is scheduled for [Day], [Date] at [Time]. Your moving company is [Vendor]. Have everything packed by [Time minus 1 hr]. Reply CONFIRM."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#eeedfe;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 9l2 2 2-4M9 7h4M9 10h4" stroke="#3c3489" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1;"><div class="t-title">Utilities confirmed on</div><div class="t-when">Trigger: Utility vendor &rarr; Complete</div><div class="sms-box" style="border-left-color:#7f77dd;">"Your utilities at [Address] are confirmed active as of [Date]. Electric and gas are on and ready."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#fcebeb;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#791f1f" stroke-width="1.2"/><path d="M8 5v3.5M8 10.5v.5" stroke="#791f1f" stroke-width="1.3" stroke-linecap="round"/></svg></div><div style="flex:1;"><div class="t-title">Service delayed / blocked</div><div class="t-when">Trigger: Any vendor row &rarr; Blocked</div><div class="sms-box" style="border-left-color:#e24b4a;">"Hi [Name] &mdash; there is a short delay with one of your services. Your move date is not affected yet. Your caseworker is working on it."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#faeeda;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 5v4l2.5 2.5" stroke="#633806" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="#633806" stroke-width="1.2"/></svg></div><div style="flex:1;"><div class="t-title">Move date rescheduled</div><div class="t-when">Trigger: Moving vendor date changes</div><div class="sms-box" style="border-left-color:#ef9f27;">"Update: your move date has changed to [New Date] at [Time]. [Vendor] is confirmed for the new date."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#e1f5ee;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="#085041" stroke-width="1.2"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="#085041" stroke-width="1.2" stroke-linecap="round"/></svg></div><div style="flex:1;"><div class="t-title">Move day &mdash; 7 AM reminder</div><div class="t-when">Trigger: Automatic at 7 AM on move date</div><div class="sms-box" style="border-left-color:#1d9e75;">"Good morning [Name] &mdash; today is your move day! [Vendor] arrives at [Time]. Welcome to your new home."</div><span class="pill-auto">automatic &mdash; time-based</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#e1f5ee;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1;"><div class="t-title">Move complete</div><div class="t-when">Trigger: Moving vendor &rarr; Complete</div><div class="sms-box" style="border-left-color:#1d9e75;">"Congratulations [Name] &mdash; your move is complete! Contact [Caseworker] if you need anything in the next 48 hours."</div><span class="pill-auto">automatic</span></div></div>
+    <div class="trigger-row"><div class="t-icon" style="background:#f1efe8;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8M8 2v12" stroke="#5f5e5a" stroke-width="1.3" stroke-linecap="round"/></svg></div><div style="flex:1;"><div class="t-title">Custom caseworker message</div><div class="t-when">Trigger: Manual send from platform</div><div class="sms-box" style="border-left-color:#888780;">For situations that do not fit a template. Caseworker types a message and sends from inside the platform.</div><span class="pill-manual">manual send</span></div></div>
+  </div>
+</div>
+
+<!-- CLIENT VIEW -->
+<div id="screen-phone" class="screen">
+  <div class="page-header"><div><div class="page-title">Client phone view</div><div class="page-sub">What Maria sees from case open to move complete &mdash; every message fired automatically.</div></div></div>
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-header"><div class="phone-av">PF</div><div><div class="phone-name">Placement Flow</div><div class="phone-sub">Housing coordinator</div></div></div>
+        <div class="messages">
+          <div class="msg-sep">Mar 20</div>
+          <div class="msg-in">Hi Maria &mdash; your housing case has been opened. We will send you updates as things progress. You do not need to do anything right now.</div>
+          <div class="msg-time">9:02 AM &middot; Automatic</div>
+          <div class="msg-sep">Mar 28</div>
+          <div class="msg-in">Great news &mdash; your housing move has been approved through HomeBase. Your caseworker will be in touch within 2 business days. You do not need to call anyone.</div>
+          <div class="msg-time">11:14 AM &middot; Automatic</div>
+          <div class="msg-sep">Mar 30</div>
+          <div class="msg-in">Update: your new home at 78 Maple St has been approved by the landlord. Services are being scheduled now.</div>
+          <div class="msg-time">2:31 PM &middot; Automatic</div>
+          <div class="msg-sep">Apr 1</div>
+          <div class="msg-in">Hi Maria &mdash; there is a short delay with your utility setup. Your move date of Apr 4 is not affected yet. Caseworker J. Santos is working on it.</div>
+          <div class="msg-time">10:08 AM &middot; Automatic</div>
+          <div class="msg-sep">Apr 2</div>
+          <div class="msg-in">Your move is scheduled for Friday, April 4 at 10:00 AM. Your moving company is Haul of Fame Movers. Have everything packed by 9 AM. Reply CONFIRM to confirm.</div>
+          <div class="msg-time">3:45 PM &middot; Automatic</div>
+          <div class="msg-out">CONFIRM</div>
+          <div class="msg-time right">3:47 PM</div>
+          <div class="msg-sep">Apr 3</div>
+          <div class="msg-in">Your utilities at 78 Maple St are confirmed active as of today. Electric and gas are on and ready for tomorrow.</div>
+          <div class="msg-time">9:20 AM &middot; Automatic</div>
+          <div class="msg-sep">Apr 4 &mdash; Move day</div>
+          <div class="msg-in">Good morning Maria &mdash; today is your move day! Haul of Fame Movers will arrive at 78 Maple St at 10:00 AM. Welcome to your new home.</div>
+          <div class="msg-time">7:00 AM &middot; Automatic</div>
+          <div class="msg-in">Congratulations Maria &mdash; your move is complete! Contact J. Santos at Way Finders if you need anything in the next 48 hours.</div>
+          <div class="msg-time">2:14 PM &middot; Automatic</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:4px;">Every &ldquo;Automatic&rdquo; message required zero caseworker action after case setup</p>
+</div>
+
+<!-- FULL JOURNEY -->
+<div id="screen-journey" class="screen">
+  <div class="page-header"><div><div class="page-title">Full client journey</div><div class="page-sub">Every platform event from case open to move complete, and the SMS it fires.</div></div></div>
+  <div class="card card-pad">
+    <div class="tl-wrap">
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#378add;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Case created</div><div class="tl-desc">Caseworker opens the case and enters client phone, primary contact, and vendor protocol.</div><div class="tl-sms">"Hi [Name] &mdash; your housing case has been opened. We will keep you updated."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#888780;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Estimate sent to vendor</div><div class="tl-desc">Caseworker logs estimate request. Packet status = Pending Approval.</div><div class="tl-nosms">No SMS &mdash; packet not yet approved. Too early to inform client.</div></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#1d9e75;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Unit / landlord approved</div><div class="tl-desc">Caseworker marks unit status as Approved.</div><div class="tl-sms">"Your new home at [Address] has been approved by the landlord. Services are being scheduled."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#378add;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Funding packet approved</div><div class="tl-desc">Caseworker marks packet as Approved and sets vendor protocol. Vendor receives notification with clear instructions.</div><div class="tl-sms">"Your move has been approved through [Funder]. Caseworker will contact you within 2 days."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#e24b4a;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Any service blocked</div><div class="tl-desc">A vendor row is marked Blocked.</div><div class="tl-sms">"There is a short delay with one of your services. Your move date is not affected yet."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#7f77dd;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Utilities confirmed active</div><div class="tl-desc">Utility vendor row marked Complete.</div><div class="tl-sms">"Your utilities at [Address] are confirmed on as of [Date]. Electric and gas are ready."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#1d9e75;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Move date scheduled</div><div class="tl-desc">Moving vendor row gets a date and status changes to Scheduled.</div><div class="tl-sms">"Your move is scheduled for [Date] at [Time]. Moving company: [Vendor]. Pack and be ready by [Time minus 1hr]."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#ef9f27;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Move date rescheduled</div><div class="tl-desc">Moving vendor date changes. Reason is logged automatically.</div><div class="tl-sms">"Update: your move date has changed to [New Date] at [Time]. [Vendor] is confirmed."</div><span class="pill-auto">SMS fires</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#1d9e75;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Move day &mdash; 7 AM reminder</div><div class="tl-desc">Automatic time-based trigger on the morning of the move.</div><div class="tl-sms">"Good morning &mdash; today is your move day! [Vendor] arrives at [Time]. Welcome to your new home."</div><span class="pill-auto">SMS fires &mdash; time-based</span></div></div>
+      <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#1d9e75;"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Move complete</div><div class="tl-desc">Moving vendor row marked Complete. Case status updates. Report data captured.</div><div class="tl-sms">"Congratulations &mdash; your move is complete! Contact [Caseworker] if you need anything in the next 48 hours."</div><span class="pill-auto">SMS fires</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGER SCREEN -->
+<div id="screen-manager" class="screen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Manager dashboard</div>
+      <div class="page-sub">All cases across all staff. Flag problems, reassign cases, and schedule substitutes.</div>
+    </div>
+    <button class="btn-primary" id="sub-btn">+ Schedule substitute</button>
+  </div>
+
+  <!-- STAFF STATUS -->
+  <div class="card card-pad" style="margin-bottom:14px;">
+    <div class="section-label">Staff status today</div>
+    <div id="staff-list">
+      <div class="staff-row" data-worker="J. Santos">
+        <div class="staff-av" style="background:#e6f1fb;color:#0c447c;">JS</div>
+        <div class="staff-body">
+          <div class="staff-name">J. Santos <span class="staff-agency">Way Finders</span></div>
+          <div class="staff-cases">2 active cases</div>
+        </div>
+        <span class="staff-pill active-pill">Active</span>
+        <button class="mark-out-btn add-btn" data-worker="J. Santos">Mark out</button>
+      </div>
+      <div class="staff-row" data-worker="T. Brown">
+        <div class="staff-av" style="background:#e1f5ee;color:#085041;">TB</div>
+        <div class="staff-body">
+          <div class="staff-name">T. Brown <span class="staff-agency">CHD</span></div>
+          <div class="staff-cases">1 active case</div>
+        </div>
+        <span class="staff-pill active-pill">Active</span>
+        <button class="mark-out-btn add-btn" data-worker="T. Brown">Mark out</button>
+      </div>
+      <div class="staff-row" data-worker="R. Diaz">
+        <div class="staff-av" style="background:#eeedfe;color:#3c3489;">RD</div>
+        <div class="staff-body">
+          <div class="staff-name">R. Diaz <span class="staff-agency">Way Finders</span></div>
+          <div class="staff-cases">0 active cases</div>
+        </div>
+        <span class="staff-pill active-pill">Active</span>
+        <button class="mark-out-btn add-btn" data-worker="R. Diaz">Mark out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="card card-pad" style="margin-bottom:14px;">
+    <div class="section-label">Active alerts</div>
+    <div id="alert-list">
+      <div class="alert-item danger-item">
+        <div class="alert-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#791f1f" stroke-width="1.3"/><path d="M7 4v3.5M7 10v.5" stroke="#791f1f" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="alert-body">
+          <div class="alert-title">WF-10293 &mdash; Utilities not confirmed, move in 2 days</div>
+          <div class="alert-sub">Caseworker: J. Santos &middot; Emergency staffer: R. Diaz</div>
+        </div>
+        <span class="staff-pill danger-pill">Urgent</span>
+      </div>
+      <div class="alert-item warn-item">
+        <div class="alert-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v5M7 9.5v.5" stroke="#633806" stroke-width="1.3" stroke-linecap="round"/><path d="M1.5 12L7 2l5.5 10H1.5z" stroke="#633806" stroke-width="1.2"/></svg>
+        </div>
+        <div class="alert-body">
+          <div class="alert-title">CHD-00441 &mdash; No update in 4 days, move in 8 days</div>
+          <div class="alert-sub">Caseworker: T. Brown &middot; Emergency staffer: not assigned</div>
+        </div>
+        <span class="staff-pill warn-pill">Watch</span>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:10px;font-style:italic;" id="no-alerts" style="display:none;">No active alerts. All cases are on track.</div>
+  </div>
+
+  <!-- ALL CASES -->
+  <div class="card card-pad">
+    <div class="section-label">All cases</div>
+    <div class="mgr-case-row" style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 90px 90px;">
+      <span>Case ID</span><span>Caseworker</span><span>Emergency staffer</span><span>Move date</span><span>Status</span>
+    </div>
+    <div id="all-cases-list">
+      <div class="mgr-case-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 90px 90px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px;align-items:center;">
+        <span style="font-weight:500;">WF-10293</span>
+        <span style="color:var(--color-text-secondary);">J. Santos</span>
+        <span style="color:var(--color-text-secondary);">R. Diaz</span>
+        <span style="color:var(--color-text-secondary);">Apr 4</span>
+        <span class="spill s-blocked">Blocked</span>
+      </div>
+      <div class="mgr-case-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 90px 90px;padding:8px 0;font-size:13px;align-items:center;">
+        <span style="font-weight:500;">CHD-00441</span>
+        <span style="color:var(--color-text-secondary);">T. Brown</span>
+        <span style="color:var(--color-text-secondary);font-style:italic;">Not assigned</span>
+        <span style="color:var(--color-text-secondary);">Apr 10</span>
+        <span class="spill s-scheduled">Scheduled</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA TRUST LAYER -->
+
+  <!-- STAFF MANAGEMENT -->
+  <div class="data-section">
+    <div class="data-section-head" style="background:var(--color-background-secondary);">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="var(--color-text-secondary)" stroke-width="1.2"/><path d="M2 14c0-2.8 1.8-4 4-4M10 9l2 2 3-3" stroke="var(--color-text-secondary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Staff access management
+    </div>
+    <div class="data-section-body">
+      <div class="section-label">Active staff accounts</div>
+      <div id="staff-mgmt-list">
+        <div class="worker-mgmt-row" id="mgmt-row-santos">
+          <div class="worker-av-sm" style="background:#e6f1fb;color:#0c447c;">JS</div>
+          <div class="worker-info">
+            <div class="worker-name-sm">J. Santos</div>
+            <div class="worker-meta">Way Finders &middot; Caseworker &middot; 2 active cases</div>
+          </div>
+          <span class="staff-pill active-pill" id="mgmt-status-santos">Active</span>
+          <button class="warn-btn" onclick="suspendWorker('santos','J. Santos')">Suspend</button>
+          <button class="danger-btn" onclick="terminateWorker('santos','J. Santos')">Terminate</button>
+        </div>
+        <div class="worker-mgmt-row" id="mgmt-row-brown">
+          <div class="worker-av-sm" style="background:#e1f5ee;color:#085041;">TB</div>
+          <div class="worker-info">
+            <div class="worker-name-sm">T. Brown</div>
+            <div class="worker-meta">CHD &middot; Caseworker &middot; 1 active case</div>
+          </div>
+          <span class="staff-pill active-pill" id="mgmt-status-brown">Active</span>
+          <button class="warn-btn" onclick="suspendWorker('brown','T. Brown')">Suspend</button>
+          <button class="danger-btn" onclick="terminateWorker('brown','T. Brown')">Terminate</button>
+        </div>
+        <div class="worker-mgmt-row" id="mgmt-row-diaz">
+          <div class="worker-av-sm" style="background:#eeedfe;color:#3c3489;">RD</div>
+          <div class="worker-info">
+            <div class="worker-name-sm">R. Diaz</div>
+            <div class="worker-meta">Way Finders &middot; Caseworker &middot; 0 active cases</div>
+          </div>
+          <span class="staff-pill active-pill" id="mgmt-status-diaz">Active</span>
+          <button class="warn-btn" onclick="suspendWorker('diaz','R. Diaz')">Suspend</button>
+          <button class="danger-btn" onclick="terminateWorker('diaz','R. Diaz')">Terminate</button>
+        </div>
+      </div>
+      <div id="termination-log" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- EXCEL IMPORT -->
+  <div class="data-section">
+    <div class="data-section-head" style="background:var(--color-background-secondary);">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3" stroke="var(--color-text-secondary)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11v2h10v-2" stroke="var(--color-text-secondary)" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Data import &amp; export
+    </div>
+    <div class="data-section-body">
+      <div class="section-label">Import cases from Excel or CSV</div>
+      <div class="import-zone" onclick="triggerImport()" id="import-zone">
+        <div class="import-title">Drop your Excel or CSV file here</div>
+        <div class="import-sub">Supports .xlsx, .xls, .csv &middot; Max 500 rows per import</div>
+        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleImport(this)"/>
+      </div>
+      <div id="import-result" style="display:none;" class="deleted-confirm">
+        File received. Preview and column mapping would appear here in the full product before confirming the import.
+      </div>
+      <div style="margin-top:14px;">
+        <div class="section-label">Export your data</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="add-btn" style="font-size:12px;padding:6px 14px;" onclick="showExportMsg('cases')">Export all cases (.xlsx)</button>
+          <button class="add-btn" style="font-size:12px;padding:6px 14px;" onclick="showExportMsg('services')">Export service log (.xlsx)</button>
+          <button class="add-btn" style="font-size:12px;padding:6px 14px;" onclick="showExportMsg('report')">Export monthly report (.xlsx)</button>
+        </div>
+        <div id="export-msg" style="display:none;font-size:12px;color:var(--color-text-success);margin-top:8px;background:var(--color-background-success);padding:8px 12px;border-radius:var(--border-radius-md);">Your export is being prepared. In the full product this would download automatically.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE FOREVER -->
+  <div class="data-section" style="border-color:var(--color-border-danger);">
+    <div class="data-section-head" style="background:#fff5f5;color:var(--color-text-danger);border-bottom-color:var(--color-border-danger);">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V3h4v1M5 4v9h6V4H5z" stroke="var(--color-text-danger)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 7v3M9 7v3" stroke="var(--color-text-danger)" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Data deletion &mdash; permanent and irreversible
+    </div>
+    <div class="data-section-body">
+      <div class="section-label">Delete a single case</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:11px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:5px;">Case ID to delete</label>
+          <input type="text" id="delete-case-id" placeholder="e.g. WF-10293" style="width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;font-family:inherit;"/>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <label style="font-size:11px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:5px;">Type DELETE to confirm</label>
+          <input type="text" id="delete-case-confirm" placeholder="Type DELETE" style="width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;font-family:inherit;"/>
+        </div>
+        <button class="danger-btn" style="padding:8px 14px;height:36px;" onclick="deleteSingleCase()">Delete case forever</button>
+      </div>
+      <div id="delete-case-result" style="display:none;" class="deleted-confirm"></div>
+
+      <div style="border-top:0.5px solid var(--color-border-danger);padding-top:16px;margin-top:4px;">
+        <div class="section-label" style="color:var(--color-text-danger);">Delete all agency data</div>
+        <div class="delete-warning">
+          This will permanently delete every case, every client record, every service log, every vendor assignment, and every message in this agency account. This action cannot be undone. Placement Flow will not retain any copy of this data after deletion is confirmed.
+        </div>
+        <div class="delete-confirm-row">
+          <input type="text" class="delete-confirm-input" id="delete-all-input" placeholder="Type DELETE EVERYTHING to confirm"/>
+          <button class="delete-forever-btn" onclick="deleteEverything()">Delete forever</button>
+        </div>
+        <div class="deleted-confirm" id="deleted-all-confirm">All agency data has been permanently deleted from Placement Flow. This account has been wiped. You may close this window.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASE NOTES / CHAT -->
+  <div class="card card-pad">
+    <div class="section-label">Case notes &mdash; WF-10293</div>
+    <div id="chat-thread" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;">
+      <div class="chat-msg">
+        <div class="chat-who">J. Santos <span class="chat-time">Mar 28, 9:02 AM</span></div>
+        <div class="chat-text">Packet approved through HomeBase. Waiting on landlord to confirm keys.</div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-who">J. Santos <span class="chat-time">Apr 1, 10:08 AM</span></div>
+        <div class="chat-text">Utilities delayed &mdash; Eversource saying earliest activation is Apr 3. Monitoring.</div>
+      </div>
+      <div class="chat-msg ai-note">
+        <div class="chat-who">Placement Flow AI <span class="chat-time">Apr 2, 8:00 AM</span></div>
+        <div class="chat-text">Utilities still pending with move date in 2 days. If not resolved today, consider notifying client of potential delay.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="chat-input" placeholder="Add a note to this case..." style="flex:1;font-size:13px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;font-family:inherit;"/>
+      <button class="btn-primary" id="chat-send" style="padding:8px 14px;">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBSTITUTE MODAL -->
+<div class="modal-overlay" id="sub-modal">
+  <div class="modal">
+    <div class="modal-title">Schedule substitute caseworker</div>
+    <div class="form-group">
+      <label class="form-label">Caseworker who is out</label>
+      <select id="sub-out">
+        <option value="">-- select --</option>
+        <option>J. Santos</option>
+        <option>T. Brown</option>
+        <option>R. Diaz</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Substitute caseworker</label>
+      <select id="sub-in">
+        <option value="">-- select --</option>
+        <option>J. Santos</option>
+        <option>T. Brown</option>
+        <option>R. Diaz</option>
+        <option>Other / temp staff</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date out</label>
+      <input type="date" id="sub-date"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason (optional)</label>
+      <select id="sub-reason">
+        <option value="">-- select --</option>
+        <option>Sick day</option>
+        <option>Vacation</option>
+        <option>Training</option>
+        <option>Family emergency</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div id="sub-error" style="font-size:12px;color:#791f1f;min-height:16px;margin-bottom:4px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="sub-cancel">Cancel</button>
+      <button class="btn-primary" id="sub-submit">Confirm &amp; reassign cases</button>
+    </div>
+  </div>
+</div>
+
+<!-- VENDOR MODAL -->
+<div class="modal-overlay" id="vendor-modal">
+  <div class="modal">
+    <div class="modal-title">Add workflow step</div>
+    <div class="form-group"><label class="form-label">Step name</label><input type="text" id="v-step" placeholder="e.g. Utility setup, Inspection, Box delivery..."/></div>
+    <div class="form-group"><label class="form-label">Vendor assigned to this step</label><input type="text" id="v-name" placeholder="e.g. Haul of Fame Movers"/></div>
+    <div class="form-group">
+      <label class="form-label">Service type</label>
+      <select id="v-type">
+        <option>Moving</option><option>Cleaning</option><option>Furniture</option>
+        <option>Utilities</option><option>Pest control</option><option>Inspection</option>
+        <option>Internet / cable</option><option>Locksmith</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group" id="v-other-group" style="display:none;">
+      <label class="form-label">Describe the service</label>
+      <input type="text" id="v-other-text" placeholder="e.g. Box delivery, storage unit, junk removal..."/>
+    </div>
+    <div class="form-group"><label class="form-label">Scheduled date</label><input type="date" id="v-date"/></div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select id="v-status"><option>Pending</option><option>Scheduled</option><option>In progress</option><option>Complete</option><option>Blocked</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reschedule reason (if applicable)</label>
+      <select id="v-reason"><option value="">-- none --</option><option>Landlord renovation not complete</option><option>Appliances not delivered</option><option>Utilities not ready</option><option>Client not ready</option><option>Vendor unavailable</option><option>Keys not ready</option><option>Other</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="vendor-cancel">Cancel</button>
+      <button class="btn-primary" id="vendor-submit">Add vendor</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CASE MODAL -->
+<div class="modal-overlay" id="new-case-modal">
+  <div class="modal">
+    <div class="modal-title">New case</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Client ID</label><input type="text" id="nc-id" placeholder="e.g. WF-10294"/></div>
+      <div class="form-group"><label class="form-label">Client first name</label><input type="text" id="nc-name" placeholder="e.g. James"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Program / agency</label>
+      <select id="nc-agency"><option value="">-- select --</option><option>Way Finders</option><option>CHD</option><option>SMOC</option><option>HomeBase</option><option>Other</option></select>
+    </div>
+    <div class="form-group" id="nc-agency-other-group" style="display:none;"><label class="form-label">Enter program / agency name</label><input type="text" id="nc-agency-other" placeholder="e.g. Springfield Housing Authority..."/></div>
+    <div class="form-group"><label class="form-label">Primary contact (caseworker name)</label><input type="text" id="nc-contact" placeholder="e.g. J. Santos"/></div>
+    <div class="form-group"><label class="form-label">Funding source</label>
+      <select id="nc-funder"><option value="">-- select --</option><option>HomeBase</option><option>RAFT</option><option>CHD</option><option>SMOC</option><option>HUD</option><option>Other</option></select>
+    </div>
+    <div class="form-group" id="nc-funder-other-group" style="display:none;"><label class="form-label">Enter funding source name</label><input type="text" id="nc-funder-other" placeholder="e.g. ESG, CDBG, Local Housing Fund..."/></div>
+    <div class="form-group"><label class="form-label">Vendor protocol</label>
+      <select id="nc-protocol"><option value="wait">Wait for caseworker call</option><option value="call">Vendor calls client directly</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Emergency / substitute caseworker</label><input type="text" id="nc-emergency" placeholder="e.g. R. Diaz (backup)"/></div>
+    <div class="form-group"><label class="form-label">Target move date</label><input type="date" id="nc-date"/></div>
+    <div id="nc-error" style="font-size:12px;color:#791f1f;min-height:16px;margin-bottom:4px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="nc-cancel">Cancel</button>
+      <button class="btn-primary" id="nc-submit">Create case</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GLOBAL FUNCTIONS (called from onclick attributes) ──
+function toggleSubsteps(id) {
+  var sub = document.getElementById('sub-' + id);
+  var arr = document.getElementById('arr-' + id);
+  if (!sub) return;
+  var isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  if (arr) arr.classList.toggle('open', !isOpen);
+}
+
+function toggleSubCheck(el) {
+  el.classList.toggle('done');
+  var label = el.nextElementSibling;
+  if (label) label.classList.toggle('done');
+  if (el.classList.contains('done')) {
+    el.innerHTML = '<svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#085041" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function suspendWorker(id, name) {
+  var status = document.getElementById('mgmt-status-' + id);
+  if (!status) return;
+  status.textContent = 'Suspended';
+  status.className = 'staff-pill warn-pill';
+  var row = document.getElementById('mgmt-row-' + id);
+  var buttons = row.querySelectorAll('button');
+  buttons[0].style.display = 'none';
+  buttons[1].textContent = 'Reactivate';
+  buttons[1].className = 'add-btn';
+  buttons[1].setAttribute('onclick', 'reactivateWorker("' + id + '","' + name + '")');
+  logTermination(name, 'suspended');
+}
+
+function terminateWorker(id, name) {
+  var status = document.getElementById('mgmt-status-' + id);
+  if (!status) return;
+  status.textContent = 'Terminated';
+  status.className = 'staff-pill out-pill';
+  var row = document.getElementById('mgmt-row-' + id);
+  var buttons = row.querySelectorAll('button');
+  buttons[0].style.display = 'none';
+  buttons[1].style.display = 'none';
+  var restoreBtn = document.createElement('span');
+  restoreBtn.style.cssText = 'font-size:11px;color:var(--color-text-tertiary);font-style:italic;';
+  restoreBtn.textContent = 'Access revoked';
+  row.appendChild(restoreBtn);
+  logTermination(name, 'terminated');
+}
+
+function reactivateWorker(id, name) {
+  var status = document.getElementById('mgmt-status-' + id);
+  if (!status) return;
+  status.textContent = 'Active';
+  status.className = 'staff-pill active-pill';
+  var row = document.getElementById('mgmt-row-' + id);
+  var buttons = row.querySelectorAll('button');
+  buttons[1].textContent = 'Suspend';
+  buttons[1].className = 'warn-btn';
+  buttons[1].setAttribute('onclick', 'suspendWorker("' + id + '","' + name + '")');
+  buttons[0].style.display = 'inline-block';
+  logTermination(name, 'reactivated');
+}
+
+function logTermination(name, action) {
+  var log = document.getElementById('termination-log');
+  if (!log) return;
+  var now = new Date();
+  var timeStr = now.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  var entry = document.createElement('div');
+  entry.style.cssText = 'font-size:11px;color:var(--color-text-secondary);padding:3px 0;border-bottom:0.5px solid var(--color-border-tertiary);';
+  var actionColors = { terminated:'color:#791f1f;', suspended:'color:#633806;', reactivated:'color:#085041;' };
+  entry.innerHTML = '<span style="color:var(--color-text-tertiary);">' + timeStr + '</span>'
+    + '   <span style="' + (actionColors[action] || '') + 'font-weight:500;">' + name + ' ' + action + '</span>'
+    + '   <span style="color:var(--color-text-tertiary);">by Manager</span>';
+  log.insertBefore(entry, log.firstChild);
+}
+
+function deleteSingleCase() {
+  var caseId  = document.getElementById('delete-case-id').value.trim();
+  var confirm = document.getElementById('delete-case-confirm').value.trim();
+  var result  = document.getElementById('delete-case-result');
+  if (!caseId) { result.style.display='block'; result.style.background='var(--color-background-danger)'; result.style.color='var(--color-text-danger)'; result.textContent='Please enter a Case ID.'; return; }
+  if (confirm !== 'DELETE') { result.style.display='block'; result.style.background='var(--color-background-danger)'; result.style.color='var(--color-text-danger)'; result.textContent='Type DELETE exactly to confirm.'; return; }
+  result.style.display='block';
+  result.style.background='var(--color-background-success)';
+  result.style.color='var(--color-text-success)';
+  result.textContent='Case ' + caseId + ' and all associated records have been permanently deleted from Placement Flow.';
+  document.getElementById('delete-case-id').value='';
+  document.getElementById('delete-case-confirm').value='';
+}
+
+function deleteEverything() {
+  var val = document.getElementById('delete-all-input').value.trim();
+  if (val !== 'DELETE EVERYTHING') {
+    var inp = document.getElementById('delete-all-input');
+    inp.style.borderColor='#e24b4a';
+    inp.style.background='#fcebeb';
+    setTimeout(function(){ inp.style.borderColor=''; inp.style.background=''; }, 2000);
+    return;
+  }
+  document.getElementById('deleted-all-confirm').style.display='block';
+  document.getElementById('delete-all-input').style.display='none';
+  document.querySelector('.delete-forever-btn').style.display='none';
+}
+
+function triggerImport() { document.getElementById('import-file').click(); }
+
+function handleImport(input) {
+  if (input.files && input.files[0]) {
+    var zone = document.getElementById('import-zone');
+    zone.style.background='var(--color-background-success)';
+    zone.style.borderColor='var(--color-border-success)';
+    zone.querySelector('.import-title').textContent = input.files[0].name + ' received';
+    zone.querySelector('.import-sub').textContent = 'Ready to map columns';
+    document.getElementById('import-result').style.display='block';
+  }
+}
+
+function showExportMsg() {
+  var msg = document.getElementById('export-msg');
+  msg.style.display='block';
+  setTimeout(function(){ msg.style.display='none'; }, 3000);
+}
+
+(function() {
+
+  // ── GATE ──────────────────────────────────────────
+  var CODE = 'pflow2025';
+  if (sessionStorage.getItem('pf_access') === 'ok') {
+    document.getElementById('pf-gate').style.display = 'none';
+  }
+  function checkGate() {
+    var val = document.getElementById('gate-input').value.trim().toLowerCase();
+    if (val === CODE) {
+      sessionStorage.setItem('pf_access', 'ok');
+      var g = document.getElementById('pf-gate');
+      g.style.transition = 'opacity .3s';
+      g.style.opacity = '0';
+      setTimeout(function() { g.style.display = 'none'; }, 320);
+    } else {
+      var inp = document.getElementById('gate-input');
+      var err = document.getElementById('gate-err');
+      inp.classList.add('error');
+      err.textContent = 'Incorrect code. Try again.';
+      inp.value = '';
+      setTimeout(function() { inp.classList.remove('error'); err.textContent = ''; }, 2500);
+    }
+  }
+  document.getElementById('gate-btn').addEventListener('click', checkGate);
+  document.getElementById('gate-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkGate();
+  });
+
+  // ── NAV TABS ──────────────────────────────────────
+  var tabs = [
+    { tab: 'tab-cases',    screen: 'screen-cases' },
+    { tab: 'tab-approval', screen: 'screen-approval' },
+    { tab: 'tab-sms',      screen: 'screen-sms' },
+    { tab: 'tab-phone',    screen: 'screen-phone' },
+    { tab: 'tab-journey',  screen: 'screen-journey' },
+    { tab: 'tab-manager',  screen: 'screen-manager' }
+  ];
+  tabs.forEach(function(t) {
+    document.getElementById(t.tab).addEventListener('click', function() {
+      tabs.forEach(function(x) {
+        document.getElementById(x.tab).classList.remove('active');
+        document.getElementById(x.screen).classList.remove('active');
+      });
+      document.getElementById(t.tab).classList.add('active');
+      document.getElementById(t.screen).classList.add('active');
+    });
+  });
+
+  // ── PROTOCOL PILLS ────────────────────────────────
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('protocol-pill')) {
+      var row = e.target.closest('.row-strip');
+      var pills = row.querySelectorAll('.protocol-pill');
+      pills.forEach(function(p) {
+        p.classList.remove('sel-wait', 'sel-call');
+      });
+      var type = e.target.getAttribute('data-type');
+      e.target.classList.add(type === 'wait' ? 'sel-wait' : 'sel-call');
+    }
+  });
+
+  // ── DELETE VENDOR ROW ─────────────────────────────
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('del-btn')) {
+      var row = e.target.closest('.vrow');
+      if (row) {
+        var card = row.closest('.card');
+        row.remove();
+        var rows = card.querySelectorAll('.vrow');
+        rows.forEach(function(r, i) {
+          var n = r.querySelector('.vnum');
+          if (n) n.textContent = i + 1;
+        });
+      }
+    }
+  });
+
+  // ── VENDOR MODAL ─────────────────────────────────
+  var vendorTargetCard = null;
+
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('open-vendor-modal')) {
+      vendorTargetCard = e.target.closest('.card');
+      document.getElementById('vendor-modal').classList.add('open');
+    }
+  });
+
+  document.getElementById('v-type').addEventListener('change', function() {
+    var grp = document.getElementById('v-other-group');
+    var inp = document.getElementById('v-other-text');
+    if (this.value === 'Other') {
+      grp.style.display = 'block';
+      inp.focus();
+    } else {
+      grp.style.display = 'none';
+      inp.value = '';
+    }
+  });
+
+  document.getElementById('vendor-cancel').addEventListener('click', function() {
+    document.getElementById('vendor-modal').classList.remove('open');
+    resetVendorForm();
+  });
+
+  document.getElementById('vendor-submit').addEventListener('click', function() {
+    var stepName = document.getElementById('v-step') ? document.getElementById('v-step').value.trim() : '';
+    var name    = document.getElementById('v-name').value.trim();
+    var typeSel = document.getElementById('v-type').value;
+    var typeOth = document.getElementById('v-other-text').value.trim();
+    var svcType = typeSel === 'Other' ? (typeOth || 'Other') : typeSel;
+    var dateVal = document.getElementById('v-date').value;
+    var status  = document.getElementById('v-status').value;
+    var displayStep = stepName || svcType || 'New step';
+
+    var dateStr = dateVal ? new Date(dateVal + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '--';
+    var statusClass = { 'Pending':'s-pending','Scheduled':'s-scheduled','In progress':'s-inprog','Complete':'s-complete','Blocked':'s-blocked' }[status] || 's-pending';
+
+    var card = vendorTargetCard || document.querySelector('#screen-cases .card');
+    var rows = card.querySelectorAll('.vrow');
+    var num  = rows.length + 1;
+    var stepId = 'new-' + Date.now();
+
+    var row = document.createElement('div');
+    row.className = 'vrow';
+    row.id = 'step-' + stepId;
+    var mainDiv = document.createElement('div');
+    mainDiv.className = 'vrow-main';
+    mainDiv.setAttribute('onclick', 'toggleSubsteps("' + stepId + '")');
+    mainDiv.innerHTML = '<span class="vnum">' + num + '</span>'
+      + '<span class="vcell">' + displayStep + ' <span class="expand-arrow" id="arr-' + stepId + '">►</span></span>'
+      + '<span class="vcell muted">' + (name || '--') + '</span>'
+      + '<span class="vcell muted">' + dateStr + '</span>'
+      + '<span class="spill ' + statusClass + '">' + status + '</span>';
+    var delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = 'x';
+    delBtn.addEventListener('click', function(e) { e.stopPropagation(); row.remove(); });
+    mainDiv.appendChild(delBtn);
+    var subDiv = document.createElement('div');
+    subDiv.className = 'substeps';
+    subDiv.id = 'sub-' + stepId;
+    subDiv.innerHTML = '<div class="substep-row"><div class="substep-check" onclick="toggleSubCheck(this)"></div><span class="substep-label">Add sub-steps by editing this step</span><span class="substep-owner">' + (name || 'Unassigned') + '</span></div>';
+    row.appendChild(mainDiv);
+    row.appendChild(subDiv);
+
+    var addRow = card.querySelector('.add-vendor-row');
+    card.insertBefore(row, addRow);
+
+    document.getElementById('vendor-modal').classList.remove('open');
+    resetVendorForm();
+  });
+
+  function resetVendorForm() {
+    var stepEl = document.getElementById('v-step');
+    if (stepEl) stepEl.value = '';
+    document.getElementById('v-name').value = '';
+    document.getElementById('v-type').selectedIndex = 0;
+    document.getElementById('v-other-text').value = '';
+    document.getElementById('v-other-group').style.display = 'none';
+    document.getElementById('v-date').value = '';
+    document.getElementById('v-status').selectedIndex = 0;
+    document.getElementById('v-reason').selectedIndex = 0;
+  }
+
+  // ── NEW CASE MODAL ────────────────────────────────
+  var avatarColors = [
+    {bg:'#e6f1fb',fg:'#0c447c'},{bg:'#e1f5ee',fg:'#085041'},
+    {bg:'#eeedfe',fg:'#3c3489'},{bg:'#faeeda',fg:'#633806'},
+    {bg:'#fbeaf0',fg:'#72243e'}
+  ];
+  var funderStyles = {
+    'HomeBase':'background:#e6f1fb;color:#0c447c;',
+    'RAFT':'background:#eeedfe;color:#3c3489;',
+    'CHD':'background:#e1f5ee;color:#085041;',
+    'SMOC':'background:#faeeda;color:#633806;',
+    'HUD':'background:#faece7;color:#712b13;',
+    'Other':'background:#f1efe8;color:#444441;'
+  };
+  var caseCount = 2;
+
+  document.getElementById('nc-agency').addEventListener('change', function() {
+    var grp = document.getElementById('nc-agency-other-group');
+    var inp = document.getElementById('nc-agency-other');
+    if (this.value === 'Other') { grp.style.display = 'block'; inp.focus(); }
+    else { grp.style.display = 'none'; inp.value = ''; }
+  });
+
+  document.getElementById('nc-funder').addEventListener('change', function() {
+    var grp = document.getElementById('nc-funder-other-group');
+    var inp = document.getElementById('nc-funder-other');
+    if (this.value === 'Other') { grp.style.display = 'block'; inp.focus(); }
+    else { grp.style.display = 'none'; inp.value = ''; }
+  });
+
+  document.getElementById('new-case-btn').addEventListener('click', function() {
+    document.getElementById('new-case-modal').classList.add('open');
+  });
+
+  document.getElementById('nc-cancel').addEventListener('click', function() {
+    document.getElementById('new-case-modal').classList.remove('open');
+    resetNewCase();
+  });
+
+  document.getElementById('nc-submit').addEventListener('click', function() {
+    var cid     = document.getElementById('nc-id').value.trim();
+    var name    = document.getElementById('nc-name').value.trim();
+    var agencySel = document.getElementById('nc-agency').value;
+    var agency  = agencySel === 'Other' ? (document.getElementById('nc-agency-other').value.trim() || 'Other') : agencySel;
+    var contact = document.getElementById('nc-contact').value.trim();
+    var funderSel = document.getElementById('nc-funder').value;
+    var funder    = funderSel === 'Other' ? (document.getElementById('nc-funder-other').value.trim() || 'Other') : funderSel;
+    var emergency = document.getElementById('nc-emergency').value.trim();
+    var proto   = document.getElementById('nc-protocol').value;
+    var dateVal = document.getElementById('nc-date').value;
+    var errEl   = document.getElementById('nc-error');
+
+    if (!cid || !name || !agency || !contact || !funder || !dateVal) {
+      errEl.textContent = 'Please fill in all fields.';
+      return;
+    }
+    errEl.textContent = '';
+
+    var c    = avatarColors[caseCount % avatarColors.length];
+    var init = name.trim().split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var fd   = new Date(dateVal + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var fs   = funderStyles[funder] || funderStyles['Other'];
+    var waitSel = proto === 'wait' ? 'sel-wait' : '';
+    var callSel = proto === 'call' ? 'sel-call' : '';
+    caseCount++;
+
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<div class="case-header">'
+      + '<div class="avatar" style="background:' + c.bg + ';color:' + c.fg + ';">' + init + '</div>'
+      + '<div style="flex:1;">'
+      + '<div class="case-id">' + cid + '</div>'
+      + '<div class="case-sub">' + name + '  ·  ' + agency + '  ·  Target move: ' + fd + '</div>'
+      + '</div>'
+      + '<span class="spill s-pending">Pending</span>'
+      + '</div>'
+      + '<div class="info-grid">'
+      + '<div class="info-cell"><div class="info-label">Primary contact</div><div class="info-val blue">' + contact + ' — ' + agency + '</div></div>'
+      + '<div class="info-cell"><div class="info-label">Also assigned</div><div class="info-val" style="color:var(--text2);">--</div></div>'
+      + '<div class="info-cell"><div class="info-label">Packet status</div><div class="info-val"><span class="spill s-pending">Pending approval</span></div></div>'
+      + '<div class="info-cell"><div class="info-label">Target move date</div><div class="info-val" style="color:var(--text2);">' + fd + '</div></div>'
+      + '</div>'
+      + '<div class="row-strip">'
+      + '<span class="row-label">Funding source</span>'
+      + '<span class="fpill" style="' + fs + '">' + funder + '</span>'
+      + '<button class="add-btn">+ add source</button>'
+      + '</div>'
+      + '<div class="row-strip">'
+      + '<span class="row-label">Vendor protocol</span>'
+      + '<button class="protocol-pill ' + waitSel + '" data-type="wait">Wait for caseworker call</button>'
+      + '<button class="protocol-pill ' + callSel + '" data-type="call">Vendor calls client directly</button>'
+      + '</div>'
+      + '<div class="vhead"><span></span><span>Step</span><span>Vendor</span><span>Sched. date</span><span>Status</span><span></span></div>'
+      + '<div class="add-vendor-row"><button class="add-btn open-vendor-modal">+ add vendor</button></div>'
+      + '<div class="rlog-wrap"><div class="section-label">Reschedule log</div><div style="font-size:12px;color:var(--text3);font-style:italic;">No reschedules logged.</div></div>'
+      + '<div class="legend">'
+      + '<span class="legend-item"><span class="spill s-pending" style="padding:2px 6px;">Pending</span> not booked</span>'
+      + '<span class="legend-item"><span class="spill s-scheduled" style="padding:2px 6px;">Scheduled</span> booked</span>'
+      + '<span class="legend-item"><span class="spill s-inprog" style="padding:2px 6px;">In progress</span> today</span>'
+      + '<span class="legend-item"><span class="spill s-complete" style="padding:2px 6px;">Complete</span> done</span>'
+      + '<span class="legend-item"><span class="spill s-blocked" style="padding:2px 6px;">Blocked</span> needs action</span>'
+      + '</div>';
+
+    document.getElementById('screen-cases').appendChild(card);
+    document.getElementById('new-case-modal').classList.remove('open');
+    resetNewCase();
+    setTimeout(function() { card.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+  });
+
+  function resetNewCase() {
+    ['nc-id','nc-name','nc-contact','nc-date','nc-agency-other','nc-funder-other','nc-emergency'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    ['nc-agency','nc-funder','nc-protocol'].forEach(function(id) {
+      document.getElementById(id).selectedIndex = 0;
+    });
+    document.getElementById('nc-agency-other-group').style.display = 'none';
+    document.getElementById('nc-funder-other-group').style.display = 'none';
+    document.getElementById('nc-error').textContent = '';
+  }
+
+  // ── CLOSE MODALS ON BACKDROP CLICK ───────────────
+  document.querySelectorAll('.modal-overlay').forEach(function(m) {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('open');
+        resetVendorForm();
+        resetNewCase();
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
